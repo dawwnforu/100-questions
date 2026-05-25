@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100个问题 - 关于我</title>
+<style>
+  :root {
+    --bg: #faf8f5;
+    --card-bg: #ffffff;
+    --text: #3d3a35;
+    --text-secondary: #8b8680;
+    --accent: #c75b4a;
+    --accent-soft: #f2e4de;
+    --border: #e8e3dc;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(250,248,245,0.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+  }
+  .header-inner {
+    max-width: 720px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .header h1 {
+    font-size: 1.3rem; font-weight: 700; letter-spacing: 0.02em;
+  }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--card-bg); color: var(--text); cursor: pointer;
+    font-size: 0.85rem; font-family: inherit;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { opacity: 0.9; background: var(--accent); }
+
+  /* Progress bar */
+  .progress-wrap { max-width: 720px; margin: 0 auto; padding: 16px 20px 0; }
+  .progress-bar-outer {
+    height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .progress-bar-inner {
+    height: 100%; background: var(--accent); border-radius: 3px;
+    transition: width 0.3s ease; width: 0%;
+  }
+  .progress-text {
+    font-size: 0.8rem; color: var(--text-secondary); margin-top: 6px; text-align: right;
+  }
+
+  /* Main */
+  .main { max-width: 720px; margin: 0 auto; padding: 20px; }
+
+  /* Question card */
+  .q-card {
+    background: var(--card-bg); border-radius: var(--radius);
+    padding: 20px 24px; margin-bottom: 14px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    transition: border-color 0.15s;
+  }
+  .q-card.answered { border-left: 3px solid var(--accent); }
+  .q-card:focus-within { border-color: var(--accent); }
+  .q-num {
+    display: inline-block; width: 28px; height: 28px; line-height: 28px;
+    text-align: center; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 0.78rem; font-weight: 600; margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .q-label {
+    font-size: 1rem; font-weight: 600; margin-bottom: 10px;
+    display: flex; align-items: flex-start; gap: 4px;
+  }
+  .q-label span { padding-top: 2px; }
+  .q-input {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 0.95rem; font-family: inherit;
+    color: var(--text); background: #fdfcfb;
+    transition: border-color 0.15s; resize: vertical; min-height: 42px;
+  }
+  .q-input:focus { outline: none; border-color: var(--accent); background: #fff; }
+  .q-input::placeholder { color: #c5bfb8; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #3d3a35; color: #fff; padding: 10px 24px; border-radius: 20px;
+    font-size: 0.9rem; z-index: 999; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal {
+    background: #fff; border-radius: var(--radius); max-width: 600px;
+    width: 100%; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 28px 24px;
+  }
+  .modal h2 { font-size: 1.2rem; margin-bottom: 16px; }
+  .modal pre {
+    white-space: pre-wrap; font-family: inherit; font-size: 0.9rem;
+    line-height: 1.8; background: #fdfcfb; padding: 16px; border-radius: 8px;
+    border: 1px solid var(--border); max-height: 50vh; overflow-y: auto;
+  }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+
+  /* Nav dots */
+  .nav-dots { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; }
+  .nav-dot {
+    width: 26px; height: 26px; line-height: 26px; text-align: center;
+    border-radius: 50%; font-size: 0.7rem; cursor: pointer;
+    border: 1px solid var(--border); background: #fff;
+    color: var(--text-secondary); transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .nav-dot:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-dot.filled { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }
+
+  /* Comparison table */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .compare-table th, .compare-table td {
+    padding: 10px 12px; border: 1px solid var(--border);
+    text-align: left; vertical-align: top;
+  }
+  .compare-table th {
+    background: var(--accent-soft); color: var(--accent);
+    font-weight: 600; position: sticky; top: 0; z-index: 1;
+  }
+  .compare-table td.num { width: 40px; text-align: center; color: var(--text-secondary); font-weight: 600; }
+  .compare-table td.q { width: 28%; font-weight: 500; }
+  .compare-table td.a { width: 34%; }
+  .compare-table td.a.empty { color: #c5bfb8; font-style: italic; }
+  .compare-table tbody tr:hover { background: #fdfaf7; }
+  .table-wrap { max-height: 65vh; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border); }
+  .compare-header { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .compare-header .badge {
+    font-size: 0.8rem; padding: 3px 10px; border-radius: 12px;
+    font-weight: 500;
+  }
+  .badge-me { background: var(--accent-soft); color: var(--accent); }
+  .badge-friend { background: #dce8f5; color: #3a6b9f; }
+
+  /* Import textarea */
+  .import-area { width: 100%; min-height: 140px; font-family: inherit; font-size: 0.85rem; padding: 12px; border-radius: 8px; border: 1px solid var(--border); resize: vertical; }
+  .import-area:focus { outline: none; border-color: var(--accent); }
+
+  /* Print */
+  @media print {
+    .header, .progress-wrap, .nav-dots, .btn, .modal-overlay, .toast { display: none !important; }
+    .q-card { break-inside: avoid; box-shadow: none; border: none; border-bottom: 1px solid #ddd; border-radius: 0; padding: 10px 0; margin: 0; }
+    .q-card.answered { border-left: none; }
+    .q-input { border: none; background: none; padding: 4px 0; min-height: auto; }
+    body { background: #fff; }
+    .main { max-width: 100%; padding: 0 20px; }
+  }
+
+  @media (max-width: 480px) {
+    .header h1 { font-size: 1.1rem; }
+    .q-card { padding: 16px; }
+    .btn { padding: 6px 12px; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>100 个问题 · 关于我</h1>
+    <div class="header-actions">
+      <button class="btn" onclick="scrollToTop()">⬆ 回到顶部</button>
+      <button class="btn" onclick="exportAnswers()">📋 导出答案</button>
+      <button class="btn" onclick="showImport()">📥 导入朋友答案</button>
+      <button class="btn" onclick="showCompare()" id="btnCompare">📊 对比查看</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨 打印</button>
+    </div>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+  <div class="progress-text" id="progressText">已回答 0 / 100</div>
+</div>
+
+<div class="main">
+  <div class="nav-dots" id="navDots"></div>
+  <div id="questions"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay hidden" id="exportModal">
+  <div class="modal">
+    <h2>📋 导出答案</h2>
+    <pre id="exportContent"></pre>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeExport()">关闭</button>
+      <button class="btn btn-primary" onclick="copyExport()">📋 一键复制</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="importModal">
+  <div class="modal">
+    <h2>📥 导入朋友的答案</h2>
+    <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">
+      让朋友先在网页中填写答案，点击「导出答案」复制文本，然后粘贴到下方：
+    </p>
+    <textarea class="import-area" id="importArea" placeholder="粘贴朋友导出的答案文本…"></textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeImport()">关闭</button>
+      <button class="btn btn-primary" onclick="doImport()">📥 导入</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="compareModal">
+  <div class="modal" style="max-width:900px;">
+    <h2>📊 答案对比</h2>
+    <div class="compare-header">
+      <span class="badge badge-me">🧑 我的答案</span>
+      <span class="badge badge-friend">👥 朋友的答案</span>
+      <span style="margin-left:auto;font-size:0.8rem;color:var(--text-secondary);" id="compareCount"></span>
+    </div>
+    <div class="table-wrap">
+      <table class="compare-table">
+        <thead><tr><th>#</th><th>问题</th><th>🧑 我的答案</th><th>👥 朋友的答案</th></tr></thead>
+        <tbody id="compareBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeCompare()">关闭</button>
+      <button class="btn btn-primary" onclick="copyCompare()">📋 复制对比结果</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  "下雪天还是下雨天",
+  "喜欢的一个气味",
+  "说一个你最疯狂的幻想",
+  "四选一：春天 / 夏天 / 秋天 / 冬天",
+  "你对自己的定位",
+  "有什么很遗憾的事情吗",
+  "怕鬼吗",
+  "说出一项你很拿手的技能",
+  "早睡党 or 熬夜党",
+  "最不想成为的一种人",
+  "近期让你开心的三件小事",
+  "想让圣诞老人送给你的一件礼物",
+  "幸运数字是什么",
+  "说一句无厘头的话吧",
+  "第一次心动的时间",
+  "很容易让你流泪的事情是什么",
+  "把自己比作一种鸟类",
+  "推荐一首你喜欢的歌吧",
+  "周末出行你选博物馆 / 公园 / 商场？",
+  "说三个雷点",
+  "此刻，下一件你要做的事情是什么",
+  "森林 or 海洋",
+  "考过最低分数的学科",
+  "读过最悲伤的一个童话故事",
+  "最想旅行的地方",
+  "你更会思考过去 / 当下 / 未来",
+  "描述一下你心中的完美晚餐",
+  "描述一个你做过的离奇的梦",
+  "形式主义 or 实用主义",
+  "可以查看任何一个事实，你选择？",
+  "你容易入睡吗",
+  "如果当初……（自由发挥）",
+  "你认为的活着的意义",
+  "最喜欢的一种花",
+  "谈谈你的情感观",
+  "近期目标",
+  "能思考决不动笔 or 能动笔决不思考",
+  "你想活到几岁",
+  "一件愿意一直坚持下去的事情",
+  "最讨厌做的一类家务",
+  "二十四节气中最喜欢的一个",
+  "乐观主义者 or 悲观主义者",
+  "想和谁一起跨年",
+  "向大家推荐几款好吃的小零食",
+  "有什么觉得很浪漫的事情吗",
+  "喜欢听的音乐类型是什么",
+  "说说你最平常一天的作息",
+  "说出一个看完感触很深的电影",
+  "你的性取向是",
+  "有很挂念的人吗",
+  "对未来的规划是什么",
+  "最希望收到的生日礼物是什么",
+  "现在心情如何",
+  "你的遗言想说点什么",
+  "做过最冲动的事情",
+  "日久生情 or 一见钟情",
+  "学生时代最快乐的三件事",
+  "你认为自己脑袋是由什么组成的",
+  "和过去的自己说几句话",
+  "有喜欢收集什么东西的习惯吗",
+  "朋友对你来说的意义",
+  "把爱具象化描述成三件物品",
+  "最喜欢的三种食物原材料",
+  "夏夜看星星 or 冬日堆雪人",
+  "上一次笑是什么时候",
+  "你的 MBTI 是什么",
+  "距离下一年还有几天",
+  "一部可以 N 刷的番 / 动漫",
+  "假如有一天你可以飞了，是因为？",
+  "元素五选一：金 / 木 / 水 / 火 / 风",
+  "现在饿吗",
+  "让你印象最深刻的一个瞬间",
+  "如果可以，你想穿越到哪个年代",
+  "描述一下理想的被单样式",
+  "喜欢的三种颜色",
+  "分享一个社死经历吧",
+  "怕冷 or 怕热",
+  "描述一个你认为很自由的画面",
+  "有什么恐惧症吗（巨物、深海等）",
+  "你名字的寓意是什么",
+  "使用最多的软件是什么",
+  "所居住的城市给你的印象是什么",
+  "和恋人相处的理想状态",
+  "和朋友相处的理想状态",
+  "说说你所渴望发生的一个时刻",
+  "窗外天气怎么样",
+  "甜粽子 or 咸粽子",
+  "分享一个生活中温暖 / 美好的瞬间",
+  "三个意象描述自己",
+  "为现在努力的程度打个分数 1-10",
+  "你认为人生的终极目标是什么",
+  "喝奶茶的甜度和冰度",
+  "描述一个让你感到舒适的空间",
+  "日出 or 日落更让你心动",
+  "现在几点啦",
+  "分享一段独特的经历吧",
+  "你能够很好地接受离别吗",
+  "想好下一顿吃什么了吗",
+  "描述一下你的环境",
+  "相信爱会永存吗"
+];
+
+const STORAGE_KEY = '100questions_answers';
+const answers = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+function saveAnswers() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+  updateProgress();
+  updateNavDots();
+}
+
+function updateProgress() {
+  const filled = Object.values(answers).filter(v => v && v.trim()).length;
+  document.getElementById('progressBar').style.width = (filled / 100 * 100) + '%';
+  document.getElementById('progressText').textContent = `已回答 ${filled} / 100`;
+}
+
+function updateNavDots() {
+  const dots = document.querySelectorAll('.nav-dot');
+  dots.forEach(dot => {
+    const idx = parseInt(dot.dataset.idx);
+    const val = answers[idx];
+    if (val && val.trim()) {
+      dot.classList.add('filled');
+    } else {
+      dot.classList.remove('filled');
+    }
+  });
+}
+
+function handleInput(idx, value) {
+  if (value.trim()) {
+    answers[idx] = value;
+  } else {
+    delete answers[idx];
+  }
+  saveAnswers();
+  // Update card style
+  const card = document.getElementById('qcard-' + idx);
+  if (card) {
+    if (value.trim()) {
+      card.classList.add('answered');
+    } else {
+      card.classList.remove('answered');
+    }
+  }
+}
+
+function buildQuestions() {
+  const container = document.getElementById('questions');
+  const navDots = document.getElementById('navDots');
+  let html = '';
+  let dotsHtml = '';
+
+  questions.forEach((q, i) => {
+    const idx = i;
+    const val = answers[idx] || '';
+    const answeredClass = val.trim() ? ' answered' : '';
+
+    html += `<div class="q-card${answeredClass}" id="qcard-${idx}">
+      <div class="q-label"><span class="q-num">${idx + 1}</span><span>${q}</span></div>
+      <input class="q-input" id="qinput-${idx}" placeholder="写下你的答案…" value="${escapeHtml(val)}" oninput="handleInput(${idx}, this.value)">
+    </div>`;
+
+    dotsHtml += `<div class="nav-dot${val.trim() ? ' filled' : ''}" data-idx="${idx}" title="第${idx + 1}题" onclick="jumpTo(${idx})">${idx + 1}</div>`;
+  });
+
+  container.innerHTML = html;
+  navDots.innerHTML = dotsHtml;
+  updateProgress();
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function jumpTo(idx) {
+  const el = document.getElementById('qcard-' + idx);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      const input = document.getElementById('qinput-' + idx);
+      if (input) input.focus();
+    }, 300);
+  }
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function exportAnswers() {
+  const lines = ['100 个问题 · 我的答案', '='.repeat(30), ''];
+  questions.forEach((q, i) => {
+    const a = answers[i];
+    lines.push(`${i + 1}. ${q}`);
+    lines.push(`   ${a ? a : '（未填写）'}`);
+    lines.push('');
+  });
+  document.getElementById('exportContent').textContent = lines.join('\n');
+  document.getElementById('exportModal').classList.remove('hidden');
+}
+
+function closeExport() {
+  document.getElementById('exportModal').classList.add('hidden');
+}
+
+function copyExport() {
+  const text = document.getElementById('exportContent').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板！'));
+  } else {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('已复制到剪贴板！');
+  }
+}
+
+// ---- Friend answers ----
+const FRIEND_KEY = '100questions_friend';
+let friendAnswers = JSON.parse(localStorage.getItem(FRIEND_KEY) || '{}');
+
+function parseExportedText(text) {
+  // Parse our export format: "N. question\n   answer\n"
+  const result = {};
+  const lines = text.split('\n');
+  let currentIdx = -1;
+  for (const line of lines) {
+    const m = line.match(/^(\d+)\.\s/);
+    if (m) {
+      currentIdx = parseInt(m[1]) - 1; // 0-based
+    } else if (currentIdx >= 0 && line.trim() && !line.startsWith('=') && !line.startsWith('100')) {
+      const answer = line.trim();
+      if (answer && answer !== '（未填写）') {
+        result[currentIdx] = answer;
+      }
+    }
+  }
+  return result;
+}
+
+function showImport() {
+  document.getElementById('importArea').value = '';
+  document.getElementById('importModal').classList.remove('hidden');
+}
+
+function closeImport() {
+  document.getElementById('importModal').classList.add('hidden');
+}
+
+function doImport() {
+  const text = document.getElementById('importArea').value.trim();
+  if (!text) { showToast('请先粘贴朋友的答案文本'); return; }
+  friendAnswers = parseExportedText(text);
+  const count = Object.keys(friendAnswers).length;
+  if (count === 0) {
+    showToast('未能解析到答案，请检查粘贴的格式是否正确');
+    return;
+  }
+  localStorage.setItem(FRIEND_KEY, JSON.stringify(friendAnswers));
+  closeImport();
+  showToast(`已导入朋友的 ${count} 个答案！`);
+}
+
+function showCompare() {
+  const myCount = Object.values(answers).filter(v => v && v.trim()).length;
+  const friendCount = Object.keys(friendAnswers).length;
+  if (myCount === 0 && friendCount === 0) {
+    showToast('你还没有填写答案，也没导入朋友的答案');
+    return;
+  }
+  document.getElementById('compareCount').textContent =
+    `我: ${myCount} 题 | 朋友: ${friendCount} 题`;
+
+  let html = '';
+  questions.forEach((q, i) => {
+    const myA = answers[i] || '';
+    const frA = friendAnswers[i] || '';
+    html += `<tr>
+      <td class="num">${i + 1}</td>
+      <td class="q">${q}</td>
+      <td class="a${myA ? '' : ' empty'}">${escapeHtml(myA) || '（未填写）'}</td>
+      <td class="a${frA ? '' : ' empty'}">${escapeHtml(frA) || '（未填写）'}</td>
+    </tr>`;
+  });
+  document.getElementById('compareBody').innerHTML = html;
+  document.getElementById('compareModal').classList.remove('hidden');
+}
+
+function closeCompare() {
+  document.getElementById('compareModal').classList.add('hidden');
+}
+
+function copyCompare() {
+  const lines = ['100 个问题 · 答案对比', '='.repeat(50), ''];
+  lines.push('问题'.padEnd(30) + '我的答案'.padEnd(25) + '朋友的答案');
+  lines.push('-'.repeat(80));
+  questions.forEach((q, i) => {
+    const myA = answers[i] || '（未填写）';
+    const frA = friendAnswers[i] || '（未填写）';
+    lines.push(`${i + 1}. ${q}`);
+    lines.push(`   我: ${myA}`);
+    lines.push(`   朋友: ${frA}`);
+    lines.push('');
+  });
+  const text = lines.join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板！'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('已复制到剪贴板！');
+  }
+}
+
+// Click overlay to close modals
+['exportModal','importModal','compareModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.classList.add('hidden');
+    }
+  });
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+  }
+});
+
+// Init
+buildQuestions();
+</script>
+</body>
+</html>
