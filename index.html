@@ -623,26 +623,20 @@ function copyCompare() {
   if (!lastCompareData) { showToast('请先生成对比结果'); return; }
   const { myParsed, friendParsed } = lastCompareData;
 
-  const lines = ['100 个问题 · 答案对比', '='.repeat(50), ''];
-  lines.push('问题'.padEnd(30) + '我的答案'.padEnd(25) + '朋友的答案');
-  lines.push('-'.repeat(80));
+  // TSV format: paste directly into Excel / WPS / Google Sheets as a table
+  const rows = [['#', '问题', '我的答案', '朋友的答案']];
   questions.forEach((q, i) => {
-    const myA = myParsed[i] || '（未填写）';
-    const frA = friendParsed[i] || '（未填写）';
-    lines.push(`${i + 1}. ${q}`);
-    lines.push(`   我: ${myA}`);
-    lines.push(`   朋友: ${frA}`);
-    lines.push('');
+    rows.push([String(i + 1), q, myParsed[i] || '（未填写）', friendParsed[i] || '（未填写）']);
   });
-  const text = lines.join('\n');
+  const text = rows.map(r => r.join('\t')).join('\n');
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板！'));
+    navigator.clipboard.writeText(text).then(() => showToast('已复制为表格！可直接粘贴到 Excel / WPS'));
   } else {
     const ta = document.createElement('textarea');
     ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
     document.body.appendChild(ta); ta.select();
     document.execCommand('copy'); document.body.removeChild(ta);
-    showToast('已复制到剪贴板！');
+    showToast('已复制为表格！可直接粘贴到 Excel / WPS');
   }
 }
 
