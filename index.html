@@ -212,6 +212,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.75rem;">网站创建人：@GitHub-dawwnforu</div>
 <div id="renderTarget" style="position:fixed;left:-9999px;top:0;width:1400px;background:#fff;padding:24px;z-index:-1;"></div>
 <div class="modal-overlay hidden" id="exportModal">
   <div class="modal">
@@ -440,7 +441,7 @@ function buildQuestions() {
 
     html += `<div class="q-card${answeredClass}" id="qcard-${idx}">
       <div class="q-label"><span class="q-num">${idx + 1}</span><span>${q}</span></div>
-      <input class="q-input" id="qinput-${idx}" placeholder="写下你的答案…" value="${escapeHtml(val)}" oninput="handleInput(${idx}, this.value)">
+      <input class="q-input" id="qinput-${idx}" placeholder="写下你的答案…" value="${escapeHtml(val)}" oninput="handleInput(${idx}, this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();jumpTo(${idx+1})}">
     </div>`;
 
     dotsHtml += `<div class="nav-dot${val.trim() ? ' filled' : ''}" data-idx="${idx}" title="第${idx + 1}题" onclick="jumpTo(${idx})">${idx + 1}</div>`;
