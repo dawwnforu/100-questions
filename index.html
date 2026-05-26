@@ -183,7 +183,7 @@
     .btn { padding: 6px 12px; font-size: 0.8rem; }
   }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js">
+<script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
 </script>
 </head>
 <body>
@@ -257,7 +257,7 @@
     <div class="modal-actions">
       <button class="btn" onclick="closeCompare()">关闭</button>
       <button class="btn" onclick="doCompareFromPaste()" style="margin-right:auto;">🔍 生成对比</button>
-      <button class="btn btn-primary" onclick="copyCompare()" id="btnCopyCompare" disabled>📋 复制对比结果</button>
+      <button class="btn btn-primary" onclick="downloadCompareImage()" id="btnDownloadImg" disabled>📥 下载长图</button>
     </div>
     <div id="compareHeader" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
       <span class="badge badge-me">🧑 我的答案</span>
@@ -269,6 +269,10 @@
         <thead><tr><th>#</th><th>问题</th><th>🧑 我的答案</th><th>👥 朋友的答案</th></tr></thead>
         <tbody id="compareBody"></tbody>
       </table>
+    </div>
+    <div id="compareImageWrap" style="display:none;margin-top:16px;">
+      <p style="font-weight:600;font-size:0.9rem;margin-bottom:8px;">🖼 长图预览</p>
+      <img id="compareImagePreview" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);" alt="对比长图">
     </div>
   </div>
 </div>
@@ -569,7 +573,8 @@ function showCompare() {
   // Hide previous results
   document.getElementById('compareHeader').style.display = 'none';
   document.getElementById('compareTableWrap').style.display = 'none';
-  document.getElementById('btnCopyCompare').disabled = true;
+  document.getElementById('compareImageWrap').style.display = 'none';
+  document.getElementById('btnDownloadImg').disabled = true;
   document.getElementById('compareModal').classList.remove('hidden');
 }
 
@@ -615,39 +620,39 @@ function doCompareFromPaste() {
   document.getElementById('compareBody').innerHTML = html;
   document.getElementById('compareHeader').style.display = 'flex';
   document.getElementById('compareTableWrap').style.display = 'block';
-  document.getElementById('btnCopyCompare').disabled = false;
+  document.getElementById('compareImageWrap').style.display = 'none';
+  document.getElementById('btnDownloadImg').disabled = false;
 }
 
 function closeCompare() {
   document.getElementById('compareModal').classList.add('hidden');
 }
 
-function copyCompare() {
+function downloadCompareImage() {
   if (!lastCompareData) { showToast('请先生成对比结果'); return; }
   const { myParsed, friendParsed } = lastCompareData;
 
-  const btn = document.getElementById('btnCopyCompare');
+  const btn = document.getElementById('btnDownloadImg');
   btn.disabled = true;
-  btn.textContent = '⏳ 生成图片中…';
+  btn.textContent = '⏳ 生成中…';
 
-  // Build full table HTML for rendering (no scroll, full height)
   let rows = '';
   questions.forEach((q, i) => {
     const myA = myParsed[i] || '（未填写）';
     const frA = friendParsed[i] || '（未填写）';
     rows += `<tr>
-      <td style="text-align:center;color:#8b8680;font-weight:600;">${i + 1}</td>
-      <td style="font-weight:500;">${escapeHtml(q)}</td>
-      <td style="${!myParsed[i] ? 'color:#c5bfb8;font-style:italic;' : ''}">${escapeHtml(myA)}</td>
-      <td style="${!friendParsed[i] ? 'color:#c5bfb8;font-style:italic;' : ''}">${escapeHtml(frA)}</td>
+      <td style="text-align:center;color:#8b8680;font-weight:600;padding:8px 10px;border:1px solid #e8e3dc;">${i + 1}</td>
+      <td style="font-weight:500;padding:8px 10px;border:1px solid #e8e3dc;">${escapeHtml(q)}</td>
+      <td style="padding:8px 10px;border:1px solid #e8e3dc;${!myParsed[i] ? 'color:#c5bfb8;font-style:italic;' : ''}">${escapeHtml(myA)}</td>
+      <td style="padding:8px 10px;border:1px solid #e8e3dc;${!friendParsed[i] ? 'color:#c5bfb8;font-style:italic;' : ''}">${escapeHtml(frA)}</td>
     </tr>`;
   });
 
-  const tableHtml = `<div style="font-family:'PingFang SC','Microsoft YaHei',sans-serif;padding:24px;background:#fff;">
-    <h2 style="margin-bottom:16px;font-size:1.2rem;">📊 100 个问题 · 答案对比</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+  const tableHtml = `<div style="font-family:'PingFang SC','Microsoft YaHei',sans-serif;padding:20px;background:#fff;">
+    <h2 style="margin-bottom:12px;font-size:1.1rem;color:#3d3a35;">📊 100 个问题 · 答案对比</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
       <thead><tr style="background:#f2e4de;">
-        <th style="padding:10px 12px;border:1px solid #e8e3dc;color:#c75b4a;">#</th>
+        <th style="padding:10px 12px;border:1px solid #e8e3dc;color:#c75b4a;text-align:center;width:36px;">#</th>
         <th style="padding:10px 12px;border:1px solid #e8e3dc;color:#c75b4a;text-align:left;">问题</th>
         <th style="padding:10px 12px;border:1px solid #e8e3dc;color:#c75b4a;text-align:left;">🧑 我的答案</th>
         <th style="padding:10px 12px;border:1px solid #e8e3dc;color:#c75b4a;text-align:left;">👥 朋友的答案</th>
@@ -659,33 +664,36 @@ function copyCompare() {
   const target = document.getElementById('renderTarget');
   target.innerHTML = tableHtml;
 
-  // Wait a tick for layout, then render
   setTimeout(() => {
+    if (typeof html2canvas === 'undefined') {
+      showToast('图片库加载失败，请刷新页面后重试');
+      btn.disabled = false;
+      btn.textContent = '📥 下载长图';
+      return;
+    }
     html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true }).then(canvas => {
+      // Show preview
+      const imgUrl = canvas.toDataURL('image/png');
+      const imgEl = document.getElementById('compareImagePreview');
+      imgEl.src = imgUrl;
+      document.getElementById('compareImageWrap').style.display = 'block';
+
+      // Trigger download
       canvas.toBlob(blob => {
-        try {
-          navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': blob })
-          ]).then(() => {
-            showToast('已复制为表格图片！可直接粘贴到微信/QQ/文档');
-          });
-        } catch (e) {
-          // Fallback: download the image
-          const a = document.createElement('a');
-          a.download = '100问题对比.png';
-          a.href = URL.createObjectURL(blob);
-          a.click();
-          showToast('已下载为图片（浏览器不支持直接复制图片）');
-        }
+        const a = document.createElement('a');
+        a.download = '100问题对比.png';
+        a.href = URL.createObjectURL(blob);
+        a.click();
+        showToast('长图已下载！可在微信中发送图片');
         target.innerHTML = '';
         btn.disabled = false;
-        btn.textContent = '📋 复制对比结果';
+        btn.textContent = '📥 下载长图';
       }, 'image/png');
     }).catch(() => {
-      showToast('生成图片失败，请重试');
+      showToast('生成失败，请重试');
       target.innerHTML = '';
       btn.disabled = false;
-      btn.textContent = '📋 复制对比结果';
+      btn.textContent = '📥 下载长图';
     });
   }, 100);
 }
