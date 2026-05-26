@@ -236,22 +236,36 @@
 </div>
 
 <div class="modal-overlay hidden" id="compareModal">
-  <div class="modal" style="max-width:900px;">
+  <div class="modal" style="max-width:950px;">
     <h2>📊 答案对比</h2>
-    <div class="compare-header">
+    <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:16px;">
+      把你和朋友的导出文本分别粘贴到下方，点「生成对比」即可，无需重新填写。
+    </p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;">
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:6px;">🧑 我的答案</div>
+        <textarea class="import-area" id="compareMyText" placeholder="粘贴自己导出的答案文本…"></textarea>
+      </div>
+      <div style="flex:1;min-width:220px;">
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:6px;">👥 朋友的答案</div>
+        <textarea class="import-area" id="compareFriendText" placeholder="粘贴朋友导出的答案文本…"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeCompare()">关闭</button>
+      <button class="btn" onclick="doCompareFromPaste()" style="margin-right:auto;">🔍 生成对比</button>
+      <button class="btn btn-primary" onclick="copyCompare()" id="btnCopyCompare" disabled>📋 复制对比结果</button>
+    </div>
+    <div id="compareHeader" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
       <span class="badge badge-me">🧑 我的答案</span>
       <span class="badge badge-friend">👥 朋友的答案</span>
       <span style="margin-left:auto;font-size:0.8rem;color:var(--text-secondary);" id="compareCount"></span>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap" id="compareTableWrap" style="display:none;">
       <table class="compare-table">
         <thead><tr><th>#</th><th>问题</th><th>🧑 我的答案</th><th>👥 朋友的答案</th></tr></thead>
         <tbody id="compareBody"></tbody>
       </table>
-    </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeCompare()">关闭</button>
-      <button class="btn btn-primary" onclick="copyCompare()">📋 复制对比结果</button>
     </div>
   </div>
 </div>
@@ -537,19 +551,57 @@ function doImport() {
 }
 
 function showCompare() {
-  const myCount = Object.values(answers).filter(v => v && v.trim()).length;
-  const friendCount = Object.keys(friendAnswers).length;
-  if (myCount === 0 && friendCount === 0) {
-    showToast('你还没有填写答案，也没导入朋友的答案');
+  // Pre-fill my answers from localStorage if available
+  const myLines = ['100 个问题 · 我的答案', '='.repeat(30), ''];
+  questions.forEach((q, i) => {
+    const a = answers[i];
+    myLines.push(`${i + 1}. ${q}`);
+    myLines.push(`   ${a ? a : '（未填写）'}`);
+    myLines.push('');
+  });
+  document.getElementById('compareMyText').value = Object.values(answers).some(v => v && v.trim()) ? myLines.join('\n') : '';
+  document.getElementById('compareFriendText').value = Object.keys(friendAnswers).length > 0
+    ? (() => { const fl = ['100 个问题 · 我的答案', '='.repeat(30), '']; questions.forEach((q,i)=>{ fl.push(`${i+1}. ${q}`); fl.push(`   ${friendAnswers[i]||'（未填写）'}`); fl.push(''); }); return fl.join('\n'); })()
+    : '';
+  // Hide previous results
+  document.getElementById('compareHeader').style.display = 'none';
+  document.getElementById('compareTableWrap').style.display = 'none';
+  document.getElementById('btnCopyCompare').disabled = true;
+  document.getElementById('compareModal').classList.remove('hidden');
+}
+
+// Store last compare data for copy
+let lastCompareData = null;
+
+function doCompareFromPaste() {
+  const myText = document.getElementById('compareMyText').value.trim();
+  const friendText = document.getElementById('compareFriendText').value.trim();
+
+  if (!myText && !friendText) {
+    showToast('请至少粘贴一个人的答案文本');
     return;
   }
+
+  const myParsed = myText ? parseExportedText(myText) : {};
+  const friendParsed = friendText ? parseExportedText(friendText) : {};
+
+  const myCount = Object.keys(myParsed).length;
+  const frCount = Object.keys(friendParsed).length;
+
+  if (myCount === 0 && frCount === 0) {
+    showToast('未能解析到答案，请检查粘贴的格式是否正确');
+    return;
+  }
+
+  lastCompareData = { myParsed, friendParsed };
+
   document.getElementById('compareCount').textContent =
-    `我: ${myCount} 题 | 朋友: ${friendCount} 题`;
+    `我: ${myCount} 题 | 朋友: ${frCount} 题`;
 
   let html = '';
   questions.forEach((q, i) => {
-    const myA = answers[i] || '';
-    const frA = friendAnswers[i] || '';
+    const myA = myParsed[i] || '';
+    const frA = friendParsed[i] || '';
     html += `<tr>
       <td class="num">${i + 1}</td>
       <td class="q">${q}</td>
@@ -558,7 +610,9 @@ function showCompare() {
     </tr>`;
   });
   document.getElementById('compareBody').innerHTML = html;
-  document.getElementById('compareModal').classList.remove('hidden');
+  document.getElementById('compareHeader').style.display = 'flex';
+  document.getElementById('compareTableWrap').style.display = 'block';
+  document.getElementById('btnCopyCompare').disabled = false;
 }
 
 function closeCompare() {
@@ -566,12 +620,15 @@ function closeCompare() {
 }
 
 function copyCompare() {
+  if (!lastCompareData) { showToast('请先生成对比结果'); return; }
+  const { myParsed, friendParsed } = lastCompareData;
+
   const lines = ['100 个问题 · 答案对比', '='.repeat(50), ''];
   lines.push('问题'.padEnd(30) + '我的答案'.padEnd(25) + '朋友的答案');
   lines.push('-'.repeat(80));
   questions.forEach((q, i) => {
-    const myA = answers[i] || '（未填写）';
-    const frA = friendAnswers[i] || '（未填写）';
+    const myA = myParsed[i] || '（未填写）';
+    const frA = friendParsed[i] || '（未填写）';
     lines.push(`${i + 1}. ${q}`);
     lines.push(`   我: ${myA}`);
     lines.push(`   朋友: ${frA}`);
